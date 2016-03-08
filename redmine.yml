@@ -1,0 +1,7 @@
+- name: redmine
+  hosts: redmine
+  sudo: yes
+  user: "{{ user }}"
+  roles:
+    - redmine
+  environment: "{{ proxy_env }}"

@@ -1,0 +1,8 @@
+---
+- name: jenkins
+  hosts: jenkins
+  become: yes
+  become_user: "{{ user }}"
+  roles:
+    - jenkins
+  environment: "{{ proxy_env }}"

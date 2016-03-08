@@ -1,0 +1,4 @@
+user: "root"
+proxy_env:
+  http_proxy: ""
+  https_proxy: ""

@@ -1,0 +1,37 @@
+---
+- name: Install openjdk and openjdk-devel
+  yum: name={{ item }} state=present update_cache=yes
+  with_items: openjdk_items
+  tags:
+    - jenkins
+    - deploy
+
+- name: Get jenkins repository
+  get_url: url={{ jenkins_repojitory }} dest={{ yum_repojitory_path }}
+  tags:
+    - jenkins
+    - deploy
+
+- name: Import jenkins key
+  rpm_key: state=present key={{ jenkins_key }}
+  tags:
+    - jenkins
+    - deploy
+
+- name: Install jenkins
+  yum: name=jenkins state=latest update_cache=yes
+  tags:
+    - jenkins
+    - deploy
+
+- name: Start jenkins
+  service: name=jenkins state=started enabled=yes
+  tags:
+    - jenkins
+    - deploy
+
+- name: Wait for port {{ jenkins_port }} availability
+  wait_for: port={{ jenkins_port }} timeout=60
+  tags:
+    - jenkins
+    - deploy

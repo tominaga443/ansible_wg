@@ -1,0 +1,39 @@
+- name: be sure curl is installed
+  yum: name=curl state=installed
+
+- name: be sure openssh-server is installed
+  yum: name=openssh-server state=installed
+
+- name: be sure sshd is running and enabled
+  service: name=sshd state=running enabled=yes
+
+- name: be sure postfix is installed
+  yum: name=postfix state=installed
+
+- name: be sure postfix is running and enabled
+  service: name=postfix state=running enabled=yes
+
+- name: be stareted firewalld
+  service: name=firewalld state=started enabled=yes
+
+- name: be sure http service port is open
+  firewalld: permanent=True service=http state=enabled immediate=true
+
+- name: download GitLab
+  get_url: url=https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
+    dest=/tmp/script.rpm.sh
+
+- name: check GitLab repo
+  stat: path=/etc/yum.repos.d/gitlab_gitlab-ce.repo
+  register: gitlab_repo
+  changed_when: false
+
+- name: set up GitLab repo
+  shell: env http_proxy={{ proxy_env['http_proxy'] }} bash /tmp/script.rpm.sh
+  when: not gitlab_repo.stat.exists
+
+- name: be sure gitlab-ce is installed
+  yum: name=gitlab-ce state=installed
+
+- name: configure GitLab
+  shell: gitlab-ctl reconfigure

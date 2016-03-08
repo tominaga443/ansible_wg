@@ -1,0 +1,99 @@
+- name: setting hosts
+  lineinfile: dest=/etc/hosts regexp='^127.0.0.1 .*' line="127.0.0.1 localhost {{ host }}"
+
+- name: create mongode.repo
+  template: src=../templates/mongodb.repo.j2 dest=/etc/yum.repos.d/mongodb.repo
+  tags: setup
+
+- name: install wget npm  curl mongodb-org
+  yum: name={{ item }} state=latest
+  with_items:
+    - wget
+    - curl
+    - npm
+    - mongodb-org
+  tags: setup
+
+- name: SSL-false
+  command: npm config set strict-ssl false
+  become: no
+
+- name: SSL-false
+  command: npm config set strict-ssl false
+
+- name: exec install meteor script
+  script: ../files/meteor-install.sh
+
+- name: install pm2
+  shell: "npm install pm2"
+  become: no
+
+- name: set locale
+  lineinfile: >-
+      dest=/etc/mongod.conf
+      line='replSet=001-rs'
+
+- name: start and enable mongodb
+  service: name=mongod state=started enabled=yes
+  tags: setup
+
+- name: check whether pm2-rocket-chat.json exist or not
+  stat: path="{{ rocketchat_path }}/bundle/pm2-rocket-chat.json"
+  register: exists_json
+  tags: setup
+
+- name: mkdir rocketchat_path
+  file: path="{{ rocketchat_path }}" state=directory
+  when: exists_json.stat.md5 is not defined
+  tags: setup
+
+- name: create rocketchat log directory path /var/log/rocket.chat
+  file: path=/var/log/rocket.chat state=directory owner="{{ user }}" group="{{ user }}"
+  when: exists_json.stat.md5 is not defined
+  tags: setup
+
+- name: check whether pm2 config file exists or not
+  stat: path="{{ rocketchat_path }}/bundle/pm2-rocket-chat.json"
+  register: exists_pm2
+
+- name: download rocketchat
+  get_url: url="{{ rocketchat_url }}" dest="{{ rocketchat_base }}" force=True
+  when: exists_pm2.stat.md5 is not defined
+  tags: setup
+
+- name: unarchive master.tar.gz
+  unarchive: src="{{ rocketchat_base }}/{{ rocketchat_extract_path }}" dest="{{ rocketchat_base }}" copy=no
+  when: exists_pm2.stat.md5 is not defined
+  tags: setup
+
+- name: change owner "{{ rocketchat_path }}"
+  file: path="{{ rocketchat_path }}" owner="{{ user }}" group="{{ user }}" recurse=yes
+
+- name: meteor build --server "{{ host }}" --directory .
+  shell: meteor build --server "{{ host }}" --directory . chdir="{{ rocketchat_path }}"
+  become: no
+  when: exists_pm2.stat.md5 is not defined
+
+- name: npm install
+  command: npm install chdir="{{ rocketchat_path }}/bundle/programs/server"
+
+- name: create pm2-rocket-chat.json
+  template: src=../templates/pm2-rocket-chat.json.j2 dest="{{ rocketchat_path }}/bundle/pm2-rocket-chat.json"
+  tags: configure
+
+- name: create initiate.js
+  template: src=../templates/initiate.js.j2 dest="{{ rocketchat_path }}/initiate.js"
+  become: no
+  tags: setup
+
+- name: create mongodb setting
+  command: mongo --quiet initiate.js chdir="{{ rocketchat_path }}"
+  become: no
+
+- name: pm2 start
+  command: ~/node_modules/.bin/pm2 start pm2-rocket-chat.json chdir="{{ rocketchat_path }}/bundle"
+  become: no
+
+- name: pm2 save
+  command: ~/node_modules/.bin/pm2 save chdir="{{ rocketchat_path }}/bundle"
+  become: no

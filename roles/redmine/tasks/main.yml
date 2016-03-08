@@ -1,0 +1,197 @@
+- name: 必要ツール群のyumインストール
+  yum: name="{{ item }}" state=latest
+  with_items:
+    - expect
+    - "@Development Tools"
+    - ImageMagick
+    - ImageMagick-devel
+    - curl-devel
+    - gcc
+    - gcc-c++
+    - httpd
+    - httpd-devel
+    - ipa-pgothic-fonts
+    - libffi-devel
+    - libxml2-devel
+    - libxslt-devel
+    - libyaml-devel
+    - openssl-devel
+    - postgresql-devel
+    - postgresql-server
+    - python-psycopg2
+    - readline-devel
+    - subversion
+    - zlib-devel
+
+- name: yumアップデート実施
+  yum: name=* state=latest
+
+- name: firewalld start
+  service: name=firewalld state=started enabled=yes
+
+- name: firewalldでHTTPを許可
+  firewalld: permanent=True service=http state=enabled immediate=true
+
+- name: SELINUX無効化
+  selinux: state=disabled
+
+- name: rubyインストールソース取得状況の確認
+  shell: ls -l /tmp/{{ rubyver }} ;echo $?
+  ignore_errors: True
+  changed_when: False
+  register: result1
+
+- name: rubyのダウンロード
+  get_url:
+    url={{ rubyurl }}
+    dest=/tmp/ruby.tar.gz
+    validate_certs=no
+
+- name: rubyの展開
+  unarchive: src=/tmp/ruby.tar.gz dest=/tmp copy=no
+  when: result1.stdout != '0'
+
+- name: rubyのインストール状況確認
+  shell: which /usr/local/bin/ruby
+  ignore_errors: True
+  changed_when: False
+  register: result2
+
+- name: rubyのインストール
+  shell: chdir=/tmp/{{ rubyver }} ./configure --disable-install-doc
+  when: result2|failed
+
+- name: make ruby
+  shell: chdir=/tmp/{{ rubyver }} make
+  when: result2|failed
+
+- name: make install ruby
+  shell: chdir=/tmp/{{ rubyver }} make install
+  when: result2|failed
+
+- name: bundlerのインストール状況確認
+  shell: which bundle
+  ignore_errors: True
+  changed_when: False
+  register: result3
+
+- name: bundlerのインストール
+  gem: name=bundler executable=/usr/local/bin/gem state=present user_install=False
+  when: result3|failed
+
+- name: PostgreSQL initdb
+  shell: postgresql-setup initdb
+  ignore_errors: True
+  changed_when: False
+
+- name: DBにredmine設定済みかの確認
+  shell: grep redmine /var/lib/pgsql/data/pg_hba.conf
+  register: result4
+  ignore_errors: True
+  changed_when: False
+
+- name: pg_hba.conf設定
+  template:
+    src=pg_hba.conf
+    dest=/var/lib/pgsql/data/pg_hba.conf
+    force=yes
+  when: result4|failed
+
+- name: PostgreSQL起動
+  service:
+    name=postgresql
+    state=started
+    enabled=yes
+
+
+- name: PostgreSQL redmine user作成
+  become_user: postgres
+  postgresql_user:
+    name=redmine
+    password={{ password }}
+
+
+- name: PostgreSQL redmine DB作成
+  become_user: postgres
+  postgresql_db:
+    name=redmine
+    encoding='UTF-8'
+    lc_collate='ja_JP.UTF-8'
+    lc_ctype='ja_JP.UTF-8'
+    template='template0'
+
+
+- name: redmineインストールソース取得状況の確認
+  shell: ls -l /var/lib/{{ redminever }}
+  ignore_errors: True
+  changed_when: False
+  register: result5
+
+- name: redmineのダウンロード
+  get_url:
+    url={{ redmineurl }}
+    dest=/tmp/redmine.tar.gz
+  when: result5|failed
+
+- name: redmineの展開
+  unarchive: src=/tmp/redmine.tar.gz dest=/var/lib copy=no
+  when: result5|failed
+
+- name: database.ymlの作成
+  template:
+    src=database.yml
+    dest=/var/lib/{{ redminever }}/config/database.yml
+    force=no
+
+- name: configuration.ymlの作成
+  template:
+    src=configuration.yml
+    dest=/var/lib/{{ redminever }}/config/configuration.yml
+    force=no
+
+- name: nokogiriの参照先をシステムライブラリに変更
+  shell: /usr/local/bin/bundle config build.nokogiri --use-system-libraries
+
+
+- name: gemパッケージのインストール
+  shell:
+    /usr/local/bin/bundle install --without development test vendor/bundle
+    chdir=/var/lib/{{ redminever }}
+
+- name: セッション改ざん防止用秘密鍵の作成
+  shell:  /usr/local/bin/bundle exec /usr/local/bin/rake generate_secret_token
+    chdir=/var/lib/{{ redminever }}
+
+- name: データベーステーブルの作成
+  shell:
+    /usr/local/bin/bundle exec /usr/local/bin/rake db:migrate
+    chdir=/var/lib/{{ redminever }}
+  environment:
+    RAILS_ENV: production
+
+- name: passengerのインストール
+  gem: name=passenger executable=/usr/local/bin/gem state=present user_install=False version={{ passengerver }}
+
+- name: passengerによるモジュールインストール
+  shell: /usr/local/bin/ruby /usr/local/lib/ruby/gems/2.2.0/gems/{{ passenger }}/bin/passenger-install-apache2-module --auto
+
+- name: Passengerの設定
+  shell: /usr/local/bin/ruby /usr/local/lib/ruby/gems/2.2.0/gems/{{ passenger }}/bin/passenger-install-apache2-module --snippet
+  register: resultsnippet
+
+- name: redmine.confの作成
+  template:
+    src=redmine.conf
+    dest=/etc/httpd/conf.d/redmine.conf
+
+- name: /redmine アクセス設定
+  file:
+    state=link
+    src=/var/lib/{{ redminever }}/public
+    dest=/var/www/html/redmine
+
+- name: redmineの所有権をapacheに変更
+  file: path=/var/lib/{{ redminever }} owner=apache group=apache recurse=yes
+
+- name: httpd再起動と有効化
+  service: name=httpd state=started enabled=yes

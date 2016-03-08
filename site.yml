@@ -1,0 +1,6 @@
+---
+- include: common.yml
+- include: gitlab.yml
+- include: jenkins.yml
+- include: redmine.yml
+- include: rocketchat.yml

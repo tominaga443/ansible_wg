@@ -1,0 +1,10 @@
+---
+- name: upgrade all packages
+  yum: name=* state=latest
+  tags:
+    - common
+
+- name: set JST timezone
+  action: file src=/usr/share/zoneinfo/Japan dest=/etc/localtime state=link
+  tags:
+    - common
