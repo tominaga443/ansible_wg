@@ -26,6 +26,9 @@
 - name: yumアップデート実施
   yum: name=* state=latest
 
+- name: firewalld is installed
+  yum: name=firewalld state=installed
+
 - name: firewalld start
   service: name=firewalld state=started enabled=yes
 
