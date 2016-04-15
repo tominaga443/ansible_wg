@@ -2,7 +2,7 @@
 - name: jenkins
   hosts: jenkins
   become: yes
-  become_user: "{{ user }}"
+  user: "{{ user }}"
   roles:
     - jenkins
   environment: "{{ proxy_env }}"

@@ -1,7 +1,7 @@
 ---
 - hosts: gitlab
   become: yes
-  become_user: "{{ user }}"
+  user: "{{ user }}"
   roles:
    - gitlab
   environment: "{{ proxy_env }}"
