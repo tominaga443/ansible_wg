@@ -159,8 +159,10 @@
     chdir=/var/lib/{{ redminever }}
 
 - name: セッション改ざん防止用秘密鍵の作成
-  shell:  /usr/local/bin/bundle exec /usr/local/bin/rake generate_secret_token
+  shell: /usr/local/bin/bundle exec /usr/local/bin/rake generate_secret_token
     chdir=/var/lib/{{ redminever }}
+  environment:
+    PATH: /usr/local/bin:$PATH
 
 - name: データベーステーブルの作成
   shell:
@@ -168,6 +170,7 @@
     chdir=/var/lib/{{ redminever }}
   environment:
     RAILS_ENV: production
+    PATH: /usr/local/bin:$PATH
 
 - name: passengerのインストール
   gem: name=passenger executable=/usr/local/bin/gem state=present user_install=False version={{ passengerver }}
