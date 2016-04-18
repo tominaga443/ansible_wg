@@ -21,7 +21,5 @@ end
 end
 
 describe selinux do
-  it { should be_disabled }
-  it { should be_enforcing }
   it { should be_permissive }
 end
