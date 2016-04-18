@@ -1,10 +1,10 @@
+host: rocketchat
 rocketchat_url: https://github.com/RocketChat/Rocket.Chat/archive/master.tar.gz
-sha256sum_num1: 1203f8f5c792fb31d66e976c962b8e83ecea07a351287d40d19d806b2b8801bb
-rocketchat_extract_path: Rocket.Chat-master.tar.gz
 rocketchat_base: /var/www
 rocketchat_path: /var/www/Rocket.Chat-master
-host: chat
-sha256sum_num2: 0bb15c00fc4668ce3dc1a70a84b80b1aaaaea61ad7efe05dd4eb91165620a17e
+rocketchat_extract_path: Rocket.Chat-master.tar.gz
+sha256sum_num1: 1203f8f5c792fb31d66e976c962b8e83ecea07a351287d40d19d806b2b8801bb
 nodejs_url: http://nodejs.org/dist/v0.10.40/node-v0.10.40-linux-x64.tar.gz
 nodejs_path: /node-v0.10.40-linux-x64.tar.gz
 nodejs_download_path: /tmp
+sha256sum_num2: 0bb15c00fc4668ce3dc1a70a84b80b1aaaaea61ad7efe05dd4eb91165620a17e
