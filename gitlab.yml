@@ -1,5 +1,6 @@
 ---
-- hosts: gitlab
+- name: gitlab
+  hosts: gitlab
   become: yes
   become_user: "{{ user }}"
   roles:
