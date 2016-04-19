@@ -1,0 +1,8 @@
+[gitlab]
+gitlab      ansible_user=root  ansible_ssh_private_key=~/.ssh/id_rsa
+[jenkins]
+jenkins     ansible_user=root  ansible_ssh_private_key=~/.ssh/id_rsa
+[redmine]
+redmine     ansible_user=root  ansible_ssh_private_key=~/.ssh/id_rsa
+[rocketchat]
+rocketchat  ansible_user=root  ansible_ssh_private_key=~/.ssh/id_rsa
