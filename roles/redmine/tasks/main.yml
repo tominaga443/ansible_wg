@@ -35,8 +35,8 @@
 - name: firewalldでHTTPを許可
   firewalld: permanent=True service=http state=enabled immediate=true
 
-- name: SELINUX無効化
-  selinux: state=disabled
+- name: SELINUXをpermissiveモードに変更
+  selinux: policy=targeted state=permissive
 
 - name: rubyインストールソース取得状況の確認
   shell: ls -l /tmp/{{ rubyver }} ;echo $?

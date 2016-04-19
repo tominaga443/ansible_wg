@@ -1,0 +1,9 @@
+[gitlab]
+gitlab-host
+[jenkins]
+jenkins-host
+[redmine]
+redmine-host
+[rocketchat]
+rocketchat-host
+
