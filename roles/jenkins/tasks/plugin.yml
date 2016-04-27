@@ -39,7 +39,7 @@
   command: java  -jar {{ jenkins_cli_dest }} -s http://{{ jenkins_host_name }}:{{ jenkins_port }} install-plugin git
   register: git_plugin_installed_result
   until: git_plugin_installed_result.stderr == ""
-  retries: 5
+  retries: 60
   delay: 10
   notify: restart jenkins
   tags:
