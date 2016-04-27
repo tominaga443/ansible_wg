@@ -1,6 +1,6 @@
 - name: redmine
   hosts: redmine
-  sudo: yes
+  become: yes
   user: "{{ user }}"
   roles:
     - redmine
