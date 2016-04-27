@@ -13,6 +13,9 @@
 - name: be sure postfix is running and enabled
   service: name=postfix state=running enabled=yes
 
+- name: be sure firewalld is installed
+  yum: name=firewalld state=installed
+
 - name: be stareted firewalld
   service: name=firewalld state=started enabled=yes
 
