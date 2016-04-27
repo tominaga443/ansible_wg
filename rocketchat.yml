@@ -1,7 +1,6 @@
 - name: rocketchat
   hosts: rocketchat
   become: yes
-  user: "{{ user }}"
   roles:
     - rocketchat
   environment: "{{ proxy_env }}"

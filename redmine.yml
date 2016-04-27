@@ -1,7 +1,6 @@
 - name: redmine
   hosts: redmine
   become: yes
-  user: "{{ user }}"
   roles:
     - redmine
   environment: "{{ proxy_env }}"
